@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeowTool Web - Replit</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #21262d;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        h1 { color: #58a6ff; font-size: 22px; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .badge-success { background: #0d2818; color: #3fb950; border: 1px solid #238636; }
+        .badge-warning { background: #341a00; color: #d29922; border: 1px solid #9e6a03; }
+        .badge-info { background: #0c2d6b; color: #58a6ff; border: 1px solid #1f6feb; }
+        
+        .btn {
+            background: #238636;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover { background: #2ea043; transform: translateY(-1px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .btn-secondary { background: #6e7681; }
+        .btn-secondary:hover { background: #8b949e; }
+        .btn-danger { background: #da3633; }
+        .btn-danger:hover { background: #f85149; }
+        .btn-discord { background: #5865F2; }
+        .btn-discord:hover { background: #4752C4; }
+        
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        
+        .upload-area {
+            border: 2px dashed #30363d;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-area:hover { border-color: #5865F2; background: #1a1b3a; }
+        .upload-area.dragover { border-color: #238636; background: #0d2818; }
+        
+        #output {
+            background: #010409;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            line-height: 1.5;
+        }
+        
+        .file-list { max-height: 250px; overflow-y: auto; }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #21262d;
+            font-size: 13px;
+        }
+        .file-item:hover { background: #1c2128; }
+        .file-info { display: flex; flex-direction: column; gap: 2px; }
+        .file-name { color: #c9d1d9; word-break: break-all; }
+        .file-meta { color: #8b949e; font-size: 11px; }
+        .file-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .badge-upload { background: #1f6feb20; color: #58a6ff; }
+        .badge-result { background: #23863620; color: #3fb950; }
+        
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #30363d;
+            border-top-color: #5865F2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .status-item { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .dot-green { background: #238636; }
+        .dot-yellow { background: #d29922; }
+        .dot-red { background: #f85149; }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast-success { background: #238636; }
+        .toast-error { background: #da3633; }
+        .toast-info { background: #1f6feb; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        
+        @media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .actions { grid-template-columns: 1fr 1fr; }
+            h1 { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>🐱 MeowTool Web</h1>
+                <span class="badge badge-info">Replit Edition</span>
+                {% if webhook_configured %}
+                <span class="badge badge-success">🔗 Discord Connected</span>
+                {% else %}
+                <span class="badge badge-warning">⚠️ Webhook Not Set</span>
+                {% endif %}
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-discord" onclick="testWebhook()">🔗 Test Discord</button>
+                <a href="/logout" class="btn btn-danger">Logout</a>
+            </div>
+        </div>
+        
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="dot dot-green"></span>
+                <span>System Online</span>
+            </div>
+            <div class="status-item">
+                <span>📁</span>
+                <span id="file-count">0 files</span>
+            </div>
+            <div class="status-item">
+                <span>🕐</span>
+                <span id="last-update">-</span>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">📤 Upload File</h3>
+                <div class="upload-area" id="upload-area">
+                    <p style="font-size: 14px;">Klik atau drag file ke sini</p>
+                    <p style="font-size: 12px; color: #8b949e; margin-top: 5px;">
+                        .txt cookies / proxies
+                    </p>
+                    <input type="file" id="file-input" style="display: none;" multiple>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">⚡ Quick Actions</h3>
+                <div class="actions">
+                    <button class="btn" onclick="runAction('check')">🔍 Check</button>
+                    <button class="btn" onclick="runAction('sort')">🗂️ Sort</button>
+                    <button class="btn" onclick="runAction('refresh')">🔄 Refresh</button>
+                    <button class="btn" onclick="runAction('proxy')">🌐 Proxy</button>
+                </div>
+                <p style="font-size: 12px; color: #8b949e; margin-top: 10px;">
+                    Hasil otomatis dikirim ke Discord
+                </p>
+            </div>
+        </div>
+
+        <div class="card" id="output-card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <h3>📋 Output</h3>
+                <button class="btn btn-secondary btn-sm" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="output"></div>
+        </div>
+
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <h3>📁 Files</h3>
+                <button class="btn btn-secondary btn-sm" onclick="loadFiles()">🔄 Refresh</button>
+            </div>
+            <div class="file-list" id="file-list">
+                <p style="color: #8b949e; text-align: center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Upload handling
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', e => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', e => handleFiles(e.target.files));
+        
+        async function handleFiles(files) {
+            for (let file of files) {
+                showToast(`Uploading ${file.name}...`, 'info');
+                await uploadFile(file);
+            }
+            loadFiles();
+        }
+        
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`✅ ${data.original_name} uploaded!`, 'success');
+                    appendOutput(`📤 Uploaded: ${data.filename}\n`);
+                }
+            } catch (err) {
+                showToast(`❌ Upload failed: ${err.message}`, 'error');
+            }
+        }
+        
+        // Run actions
+        async function runAction(action) {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="loading"></span> Running...';
+            btn.disabled = true;
+            
+            document.getElementById('output-card').style.display = 'block';
+            appendOutput(`\n🚀 Starting ${action}...\n`);
+            
+            try {
+                const res = await fetch('/api/run', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({action})
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    appendOutput(`✅ Completed!\n`);
+                    if (data.stdout) appendOutput(`\n${data.stdout}\n`);
+                    if (data.stderr) appendOutput(`\n⚠️ ${data.stderr}\n`);
+                    
+                    if (data.discord_sent) {
+                        showToast('📤 Results sent to Discord!', 'success');
+                        appendOutput(`\n📤 Sent to Discord: ${data.result_files.join(', ')}\n`);
+                    }
+                } else {
+                    appendOutput(`❌ Error: ${data.error}\n`);
+                    showToast(`Error: ${data.error}`, 'error');
+                }
+            } catch (err) {
+                appendOutput(`❌ ${err.message}\n`);
+                showToast(err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                loadFiles();
+            }
+        }
+        
+        async function testWebhook() {
+            showToast('Testing Discord webhook...', 'info');
+            try {
+                const res = await fetch('/api/test-webhook', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('✅ Discord webhook working!', 'success');
+                } else {
+                    showToast('❌ Webhook failed!', 'error');
+                }
+            } catch (err) {
+                showToast('❌ Test failed', 'error');
+            }
+        }
+        
+        // Output
+        function appendOutput(text) {
+            const output = document.getElementById('output');
+            output.style.display = 'block';
+            output.textContent += text;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+            document.getElementById('output-card').style.display = 'none';
+        }
+        
+        // Files
+        async function loadFiles() {
+            try {
+                const res = await fetch('/api/files');
+                const data = await res.json();
+                const list = document.getElementById('file-list');
+                
+                document.getElementById('file-count').textContent = `${data.files.length} files`;
+                document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+                
+                if (data.files.length === 0) {
+                    list.innerHTML = '<p style="color: #8b949e; text-align: center; padding: 20px;">No files yet</p>';
+                    return;
+                }
+                
+                list.innerHTML = data.files.map(f => `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <span class="file-name">${f.name}</span>
+                            <span class="file-meta">${f.modified} • ${formatSize(f.size)}</span>
+                        </div>
+                        <span class="file-badge badge-${f.folder}">${f.folder}</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+        
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+            return (bytes/1048576).toFixed(1) + ' MB';
+        }
+        
+        // Toast
+        function showToast(msg, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // Init
+        loadFiles();
+        setInterval(loadFiles, 15000);
+    </script>
+</body>
+</html>
